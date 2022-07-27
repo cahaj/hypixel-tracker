@@ -65,13 +65,11 @@ except Exception as e:
     print("=================================================================")
     print("")
 
-#print(uuid)
 
 getstats = requests.get(f"https://api.hypixel.net/player?uuid={uuid}", headers = headershyp)
 stats = getstats.json()
 getwse = requests.post(f"{url}/winstreak", headers = headers, json =  {'igns': [f'{trackedign}']})
 wse = getwse.json()
-pprint(wse)
 
 
 if "Bedwars" in stats["player"]["stats"] and "winstreak" in stats["player"]["stats"]["Bedwars"]:
@@ -106,7 +104,6 @@ print(">> Trying to use Hypixel API status endpoint...")
 #=============
 
 if data["session"]["online"] is not False: 
-    #pprint(data["session"])
     print("SUCCESS! >> Using online status method...")
     statusapi = True
         
@@ -119,19 +116,15 @@ def usestatusapi():
         r1 = requests.get(f"{urlhyp}/status?uuid={uuid}", headers = headershyp)
         data1 = r1.json()
         ses1 = data1["session"]
-        #print(f"ses1: {ses1}")
 
         time.sleep(2)
         r2 = requests.get(f"{urlhyp}/status?uuid={uuid}", headers = headershyp)
         data2 = r2.json()
         ses2 = data2["session"]
-        #print(f"ses2: {ses2}")
 
         ses = diff(ses1, ses2)
-        #print(f"ses (dif): {ses}")
 
         if bool(ses):
-            #print(f"ses1 (update): {ses2}")
             print("")
             print(f"[{current_time}] >> Hypixel API || {trackedign}'s status updated:")
             if "gameType" in ses2:
@@ -167,13 +160,11 @@ def userecentapi():
         r1 = requests.get(f"{urlhyp}/recentgames?uuid={uuid}", headers = headershyp)
         data1 = r1.json()
         gamelast1 = data1["games"][0]
-        #pprint(f"gamelast1: {gamelast1}")
 
         time.sleep(4)
         r2 = requests.get(f"{urlhyp}/recentgames?uuid={uuid}", headers = headershyp)
         data2 = r2.json()
         gamelast2 = data2["games"][0]
-        #pprint(f"gamelast2: {gamelast2}")
 
         gamelast = diff(gamelast1, gamelast2)
 
