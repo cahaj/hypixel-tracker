@@ -39,6 +39,7 @@ print("===========================================")
 print("       > made by azurim#8202 <")
 print("")
 trackedign = input("Enter ign: ")
+trackedign_low = trackedign.lower()
 print(f"Tracking {trackedign}...")
 
 
@@ -49,7 +50,7 @@ try:
     uuid = udata["id"]
     rduuid = requests.get(f"{url}/convert?name={trackedign}", headers = headers)
     dudata = rduuid.json()
-    dasheduuid = dudata[f'{trackedign}']
+    dasheduuid = dudata[f'{trackedign_low}']
 except Exception as e:
     print("")
     print("=================================================================")
@@ -70,18 +71,24 @@ getstats = requests.get(f"https://api.hypixel.net/player?uuid={uuid}", headers =
 stats = getstats.json()
 getwse = requests.post(f"{url}/winstreak", headers = headers, json =  {'igns': [f'{trackedign}']})
 wse = getwse.json()
+pprint(wse)
 
-if "winstreak" in stats["player"]["stats"]["Bedwars"]:
-    bwCWS = stats["player"]["stats"]["Bedwars"]
+
+if "Bedwars" in stats["player"]["stats"] and "winstreak" in stats["player"]["stats"]["Bedwars"]:
+    bwCWS = stats["player"]["stats"]["Bedwars"]["winstreak"]
 else:
     bwCWS = "N/A"
 
-if "current_winstreak" in stats["player"]["stats"]["Duels"]:
+if "Duels" in stats["player"]["stats"] and "current_winstreak" in stats["player"]["stats"]["Duels"]:
     duelsCWS = stats["player"]["stats"]["Duels"]["current_winstreak"]
 else:
     duelsCWS = "N/A"
 
-bwWSE = wse["data"]["uuids"][dasheduuid]["data"]["overall_winstreak"]
+if dasheduuid in wse["data"]["uuids"]:
+    bwWSE = wse["data"]["uuids"][dasheduuid]["data"]["overall_winstreak"]
+else:
+    bwWSE = "N/A"
+
 
 print("")
 print(f">> Hypixel API || Bedwars CWS: {bwCWS}, Duels CWS: {duelsCWS}")
@@ -114,7 +121,7 @@ def usestatusapi():
         ses1 = data1["session"]
         #print(f"ses1: {ses1}")
 
-        time.sleep(3)
+        time.sleep(2)
         r2 = requests.get(f"{urlhyp}/status?uuid={uuid}", headers = headershyp)
         data2 = r2.json()
         ses2 = data2["session"]
@@ -162,7 +169,7 @@ def userecentapi():
         gamelast1 = data1["games"][0]
         #pprint(f"gamelast1: {gamelast1}")
 
-        time.sleep(5)
+        time.sleep(4)
         r2 = requests.get(f"{urlhyp}/recentgames?uuid={uuid}", headers = headershyp)
         data2 = r2.json()
         gamelast2 = data2["games"][0]
@@ -178,28 +185,74 @@ def userecentapi():
                 print("")
                 print(f"[{current_time}] >> Hypixel API || {trackedign}'s recent games updated:")
                 print(f"-- Finished a game of {gametype}")
-                print(f"-- map: {map}")
                 print(f"-- mode: {mode}")
+                print(f"-- map: {map}")               
             else:
                 print("")
                 print(f"[{current_time}] >> Hypixel API || {trackedign}'s recent games updated:")
                 print(f"-- Started a game of {gametype}")
-                print(f"-- map: {map}")
                 print(f"-- mode: {mode}")
+                print(f"-- map: {map}")
             gamelast = {}
-            time.sleep(5)
+            time.sleep(3)
 
 
 #===========
 #ANTISNIPER
 #===========
 
+antisniper = False
+
 if statusapi == False:
-    print("Antisniper API mode enabled")
+    print("")
+    print(">> Trying to use Antisniper API...")
+    player = requests.get(f"{url}/player/v2?uuid={dasheduuid}", headers = headers)
+    playerdata = player.json()
+    if playerdata["success"] == True:
+        if playerdata["player"]["times_seen"] > 0:
+            print(">> SUCCESS! Using Antisniper API bot queue tracking method...")
+            antisniper = True
+        else:
+            print(">> Tracked player not in database.")
+            antisniper = False
+    else:
+        pprint(playerdata["cause"])
+
+def useantisniper():
+    while statusapi == False:
+        r = requests.get(f"{url}/botqueues", headers = headers)
+        data = r.json()
+
+        r2 = requests.get(f"{url}/botstatus", headers = headers)
+        data2 = r2.json()
+
+        botlist = []
+        botstatus = None
+
+        for botname in data["data"]:
+            botlist.append(botname)
 
 
-thread1 = threading.Thread(target=usestatusapi)
-thread1.start()
+        for getbotname in botlist:
+            if trackedign in data["data"][getbotname]["queue"]:
+                if botstatus != data2["data"][getbotname]:
+                    print("")
+                    print(f">> Antisniper API || {trackedign} is in {getbotname}'s queue")
+                    botstatus = data2["data"][getbotname]
+                    print(f"-- server: {botstatus['server']}")
+                    print(f"-- mode: {botstatus['mode']}")
+                    print(f"-- map: {botstatus['map']}")
+            else:
+                botstatus = None
+    
+        time.sleep(4)
 
-thread1 = threading.Thread(target=userecentapi)
-thread1.start()
+
+thread = threading.Thread(target=usestatusapi)
+thread.start()
+
+thread = threading.Thread(target=userecentapi)
+thread.start()
+
+thread = threading.Thread(target=useantisniper)
+thread.start()
