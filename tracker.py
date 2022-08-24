@@ -11,8 +11,6 @@ from colorama import Fore, Back, Style
 import threading
 from datetime import datetime
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
 
 url = "https://api.antisniper.net"
 urlhyp = "https://api.hypixel.net"
@@ -125,6 +123,8 @@ def usestatusapi():
         ses = diff(ses1, ses2)
 
         if bool(ses):
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
             print("")
             print(f"[{current_time}] >> Hypixel API || {trackedign}'s status updated:")
             if "gameType" in ses2:
@@ -169,6 +169,8 @@ def userecentapi():
         gamelast = diff(gamelast1, gamelast2)
 
         if bool(gamelast):
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
             gametype = gamelast2["gameType"]
             map = gamelast2["map"]
             mode = gamelast2["mode"]
@@ -209,8 +211,8 @@ if statusapi == False:
     else:
         pprint(playerdata["cause"])
 
-def useantisniper():
-    while statusapi == False:
+def useantisniperLEGACY():
+    while antisniper == True:
         r = requests.get(f"{url}/botqueues", headers = headers)
         data = r.json()
 
@@ -218,7 +220,7 @@ def useantisniper():
         data2 = r2.json()
 
         botlist = []
-        botstatus = None
+        #botstatus = None
 
         for botname in data["data"]:
             botlist.append(botname)
@@ -226,17 +228,44 @@ def useantisniper():
 
         for getbotname in botlist:
             if trackedign in data["data"][getbotname]["queue"]:
-                if botstatus != data2["data"][getbotname]:
+                #if botstatus != data2["data"][getbotname]:
                     print("")
                     print(f">> Antisniper API || {trackedign} is in {getbotname}'s queue")
                     botstatus = data2["data"][getbotname]
                     print(f"-- server: {botstatus['server']}")
                     print(f"-- mode: {botstatus['mode']}")
                     print(f"-- map: {botstatus['map']}")
-            else:
-                botstatus = None
+            #else:
+                #botstatus = None
     
-        time.sleep(4)
+        time.sleep(3)
+
+def useantisniper():
+    while antisniper == True:
+        botr = requests.get(f"{url}/botlist", headers = headers)
+        botdata = botr.json()
+        botlist = botdata["botlist"]
+
+        r2 = requests.get(f"{url}/botqueues/v3", headers = headers)
+        data2 = r2.json()
+
+        time.sleep(2)
+
+        r = requests.get(f"{url}/botqueues/v3", headers = headers)
+        data = r.json()
+
+        for bot in botlist:
+            if data2["data"][bot]["server"] != data["data"][bot]["server"]:
+                for ignlists in data["data"][bot]["last_queue"]:
+                    if trackedign_low == ignlists["ign_lower"]:
+                        server = data["data"][bot]["server"]
+                        map = data["data"][bot]["map"]
+                        mode = data["data"][bot]["mode"]
+                        print("")
+                        print(f">> Antisniper API || {trackedign} is in {bot}'s queue")
+                        print(f"-- server: {server}")
+                        print(f"-- mode: {mode}")
+                        print(f"-- map: {map}")
 
 
 thread = threading.Thread(target=usestatusapi)
